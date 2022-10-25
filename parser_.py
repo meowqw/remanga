@@ -1,7 +1,4 @@
-from distutils.command.install_egg_info import to_filename
-from operator import le
 import requests
-from bs4 import BeautifulSoup
 import time
 from threading import Thread
 from sqlalchemy import insert, update

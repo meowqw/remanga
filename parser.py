@@ -1,6 +1,5 @@
 from operator import le
 import requests
-from bs4 import BeautifulSoup
 import time
 import asyncio
 from sqlalchemy import insert
