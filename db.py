@@ -30,7 +30,6 @@ def get_all():
     query = select([items])
     return engine.connect().execute(query).all()
 
-print(len(get_all()))
 
 def get_item(id):
     query = select([items]).where(items.c.id == id)
