@@ -1,4 +1,7 @@
+from distutils.command.install_egg_info import to_filename
+from operator import le
 import requests
+from bs4 import BeautifulSoup
 import time
 from threading import Thread
 from sqlalchemy import insert, update
@@ -11,8 +14,8 @@ from bot import send_msg
 # 1 - Продолжается
 # 4 - Анонс
 
-tg_ids = ['678552606', '1655138958', '892464638']
-# tg_ids = ['1655138958']
+# tg_ids = ['678552606', '1655138958']
+tg_ids = ['1655138958']
 
 def add_data_in_db(data):
 
@@ -41,7 +44,6 @@ def send_logic(data, old_data):
     
     
     days_count = datetime.datetime.now() - old_data.created_on
-    print(days_count)
 
     if data['date_last_character'] != None:
 
@@ -98,8 +100,7 @@ def update_data_in_db(data, old_data):
         count_chapters = data['count_chapters'],
         age = data['age'],
         date_first_character = data['date_first_character'],
-        date_last_character = data['date_last_character'],
-        created_on = datetime.datetime.now()
+        date_last_character = data['date_last_character']
     )
     conn = engine.connect()
     conn.execute(upd)
