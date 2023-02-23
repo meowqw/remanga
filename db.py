@@ -10,7 +10,8 @@ engine = create_engine(
 )
 
 # items model
-items = Table('items', metadata, Column('id', Integer(), primary_key=True),
+items = Table('items', metadata,
+              Column('id', Integer(), primary_key=True),
               Column('link', String(200), nullable=True),
               Column('ru_name', String(200), nullable=True),
               Column('en_name', String(200), nullable=True),
@@ -21,16 +22,19 @@ items = Table('items', metadata, Column('id', Integer(), primary_key=True),
               Column('age', Integer(), nullable=True),
               Column('date_first_character', DateTime(), nullable=True),
               Column('date_last_character', DateTime(), nullable=True),
-              Column('created_on', DateTime(), default=datetime.now))
+              Column('created_on', DateTime(), default=datetime.now),
+              Column('updated_on', DateTime(), default=datetime.now))
+
 
 # create table
 metadata.create_all(engine)
 
+
+
 def get_all():
-    query = select([items])
-    return engine.connect().execute(query).all()
+    return engine.connect().execute(select(items)).all()
 
 
 def get_item(id):
-    query = select([items]).where(items.c.id == id)
+    query = select(items).where(items.c.id == id)
     return engine.connect().execute(query).first()
