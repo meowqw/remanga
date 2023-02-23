@@ -11,8 +11,8 @@ from bot import send_msg
 # 1 - Продолжается
 # 4 - Анонс
 
-# tg_ids = ['678552606', '1655138958', '892464638']
-tg_ids = ['1655138958']
+tg_ids = ['678552606', '1655138958', '892464638']
+# tg_ids = ['1655138958']
 
 def add_data_in_db(data):
 
@@ -36,51 +36,6 @@ def add_data_in_db(data):
     conn.commit()
     
     print(data['id'], data['en_name'])
-    
-# def send_logic(data, old_data):
-#     """SENDING NOTIFICATION LOGIC"""
-    
-    
-#     days_count = datetime.datetime.now() - old_data.created_on
-#     print(days_count)
-
-#     if data['date_last_character'] != None:
-
-#         date_last = datetime.datetime.strptime(data['date_last_character'], '%Y-%m-%dT%H:%M:%S.%f')
-#         days_last_character = datetime.datetime.now() - date_last
-#     else:
-#         days_last_character = None
-    
-#     # 1 state (нет глав ИЛИ не менялся переводчик И с момента попадания в бд прошло 8 дней)
-#     if int(days_count.days) >= 8:
-#         if data['publisher'] == old_data.publisher or data['count_chapters'] == 0:
-            
-#             for tg_id in tg_ids:
-#                 send_msg(tg_id, 'https://remanga.org/manga/' + data['link'])
-        
-#         # 3 state (был изменен переводчик И есть главы И прошло 8 дней)   
-#         elif days_last_character != None:
-#             if data['publisher'] != old_data.publisher and data['count_chapters'] > 0 and int(days_last_character.days) >= 8:
-                
-#                 for tg_id in tg_ids:
-#                     send_msg(tg_id, 'https://remanga.org/manga/' + data['link'])
-            
-                
-    
-#     # 2 state (есть главы И с момента публикации последней прошло 3 месяца И статус = 1)
-#     if days_last_character != None:
-#         if int(days_last_character.days) > 90:
-#             if data['count_chapters'] > 0 and data['status'] == 1: 
-#                 if days_last_character != None:
-#                     if int(days_last_character.days) > 90:
-#                         for tg_id in tg_ids:
-#                             send_msg(tg_id, 'https://remanga.org/manga/' + data['link'])
-                            
-#             # 4 state (был изменен переводчик И есть главы И прошло 90 дней) 
-#             elif data['publisher'] != old_data.publisher and data['count_chapters'] > 0 and int(days_last_character.days) >= 90:
-                
-#                 for tg_id in tg_ids:
-#                     send_msg(tg_id, 'https://remanga.org/manga/' + data['link'])
              
              
 def send_logic(data, old_data):
@@ -89,25 +44,45 @@ def send_logic(data, old_data):
     
     
     # кол-во дней между добавлением и текушей датой 
-    days_count = int((datetime.datetime.now() - old_data.update_on).days)
+    days_count = int((datetime.datetime.now() - old_data.updated_on).days)
     
     # если разница 7 дней
     if days_count == 7:
         # если его статус = продолжается
         if int(data['status']) == 1:
-            # кол-во глав не изменилось
-            if old_data.count_chapters == data['count_chapters']:
+            # кол-во глав == 0
+            if old_data.count_chapters == 0:
                 for tg_id in tg_ids:
                     send_msg(tg_id, 'https://remanga.org/manga/' + data['link']) # отправляем уведомление
                 update_data_in_db(data, old_data) # обновляем запись
                 
+            elif data['publisher'] != old_data.publisher:
+                # кол-во глав не изменилось
+                if old_data.count_chapters == data['count_chapters']:
+                    for tg_id in tg_ids:
+                        send_msg(tg_id, 'https://remanga.org/manga/' + data['link']) # отправляем уведомление
+                    update_data_in_db(data, old_data) # обновляем запись
+                
+    # если обновлений не было 90 дней
+    elif days_count == 90:
+        # статус - продолжается
+        if int(data['status']) == 1:
+            # кол-во глав не изменилось
+            if old_data.count_chapters == data['count_chapters']:
+                for tg_id in tg_ids:
+                    send_msg(tg_id, 'https://remanga.org/manga/' + data['link']) # отправляем уведомление
+                update_data_in_db(data, old_data) # обновляем запис
+            
+            # если переводчик другой
+            elif data['publisher'] != old_data.publisher:
+                if old_data.count_chapters == data['count_chapters']:
+                    for tg_id in tg_ids:
+                        send_msg(tg_id, 'https://remanga.org/manga/' + data['link']) # отправляем уведомление
+                    update_data_in_db(data, old_data) # обновляем запись
+                    
 
 def update_data_in_db(data, old_data):
-    
-    # send notification
-    # send_logic(data, old_data)
-    
-            
+                
     upd = update(items).where(items.c.id==data['id']).values(
         link = data['link'],
         ru_name = data['ru_name'],
@@ -191,6 +166,8 @@ def get_titles(link, headers):
     request = requests.get(link, headers=headers)
     if request.status_code == 200:
         content = request.json()['content']
+        
+        new_data = 0
         if len(content) > 0:
             for item in content:
                 
@@ -215,15 +192,15 @@ def get_titles(link, headers):
                     info['year'] = year
 
                     if item_data == None:
-
+                        new_data += 1
                         add_data_in_db(info)
                     else:
                         # если запись до этого была в базе, проверяем ее
                         send_logic(info, item_data)
-                    # else:
                         
-                    #     # upd and sending notification
-                    #     update_data_in_db(info, item_data)
+            if new_data != 0:
+                for tg_id in tg_ids:
+                    send_msg(tg_id, f'Добавлено новых даннных - {new_data}') # отправляем уведомление
                     
 
 
