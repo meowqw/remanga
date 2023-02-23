@@ -33,7 +33,7 @@ def add_data_in_db(data):
     
     conn = engine.connect()
     r = conn.execute(ins)
-    conn.commit()
+    # conn.commit()
     
     print(data['id'], data['en_name'])
              
@@ -99,7 +99,7 @@ def update_data_in_db(data, old_data):
     conn = engine.connect()
     conn.execute(upd)
     
-    conn.commit()
+    # conn.commit()
 
 
 def get_characters_date(id, headers):
